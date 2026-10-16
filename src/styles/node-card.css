@@ -1,0 +1,388 @@
+/**
+ * 内景 · 节点介绍面板样式（task-4 专属）。
+ *
+ * 全部类名以 `.inner-node-card` 为前缀，**不与 global.css 的任何既有选择器重叠**，
+ * 以免与 task-2 的全局样式改动打架。
+ * 颜色一律走 tokens 的色值（CSS 变量在同文件底部声明，便于对齐 tokens.ts）。
+ */
+
+/* ============ 面板本体 ============ */
+
+.inner-node-card {
+  position: fixed;
+  z-index: 40;
+  /* 默认停靠在左侧，避免遮挡画面中央的人体（人体居中偏右） */
+  left: clamp(16px, 4vw, 72px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(360px, calc(100vw - 40px));
+  max-height: min(72vh, 620px);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 22px 18px;
+  /* 本文件自带一套局部变量，全部带 --inc- 前缀：
+     即便 task-2 调整 global.css 的 :root，本面板也不会跑版。 */
+  --inc-border: #242a36;
+  --inc-border-soft: rgba(255, 255, 255, 0.08);
+  --inc-text: #dfe4ec;
+  --inc-text-dim: #8b93a5;
+  --inc-text-dim2: #5e6678;
+  --inc-accent: #d9b877;
+  --inc-accent-deep: #a8823f;
+  border: 1px solid var(--inc-border);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(24, 28, 38, 0.94), rgba(12, 14, 19, 0.96));
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow:
+    0 18px 52px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--inc-text);
+  /* 动效：淡入 + 轻微右移（时长对齐 tokens.motion.reveal = 720ms） */
+  opacity: 0;
+  translate: -12px 0;
+  transition:
+    opacity var(--motion-reveal, 720ms) cubic-bezier(0.22, 0.61, 0.36, 1),
+    translate var(--motion-reveal, 720ms) cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, translate;
+  pointer-events: auto;
+}
+
+/* 入场完成后落到静止位 */
+.inner-node-card.is-open {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* 关闭中：走 fadeOut（420ms），比入场快，收得干脆 */
+.inner-node-card.is-closing {
+  opacity: 0;
+  translate: -10px 0;
+  transition:
+    opacity var(--motion-fade, 420ms) ease,
+    translate var(--motion-fade, 420ms) ease;
+  pointer-events: none;
+}
+
+/* 分组配色：十神＝青绿，神煞＝紫（与节点本体同色，视觉上一眼对上） */
+.inner-node-card.is-teal {
+  --inc-accent: #6ee7b7;
+  --inc-accent-deep: #2f8f6d;
+}
+
+.inner-node-card.is-purple {
+  --inc-accent: #a78bfa;
+  --inc-accent-deep: #6d4fc4;
+}
+
+/* 顶部一道极细的强调线，两端渐隐 */
+.inner-node-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--inc-accent) 22%,
+    var(--inc-accent) 78%,
+    transparent
+  );
+  opacity: 0.55;
+}
+
+/* ============ 头部 ============ */
+
+.inner-node-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.inner-node-card__glyph {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--inc-accent-deep);
+  border-radius: 50%;
+  color: var(--inc-accent);
+  background: color-mix(in srgb, var(--inc-accent) 10%, transparent);
+}
+
+.inner-node-card__glyph svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.inner-node-card__title {
+  min-width: 0;
+  flex: 1;
+}
+
+.inner-node-card__name {
+  margin: 0;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: 0.04em;
+  color: var(--inc-accent);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--inc-accent) 34%, transparent);
+}
+
+.inner-node-card__tagline {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--inc-text-dim);
+}
+
+/* ============ 元信息小标签行 ============ */
+
+.inner-node-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.inner-node-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--inc-border);
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--inc-text-dim);
+  white-space: nowrap;
+}
+
+/* 分组标签用强调色 */
+.inner-node-card__chip.is-group {
+  border-color: var(--inc-accent-deep);
+  color: var(--inc-accent);
+  background: color-mix(in srgb, var(--inc-accent) 9%, transparent);
+}
+
+/* 吉凶标签 */
+.inner-node-card__chip.is-ji {
+  border-color: rgba(110, 231, 183, 0.42);
+  color: #6ee7b7;
+}
+
+.inner-node-card__chip.is-xiong {
+  border-color: rgba(217, 110, 110, 0.42);
+  color: #e08a8a;
+}
+
+.inner-node-card__chip.is-zhong {
+  border-color: rgba(217, 184, 119, 0.4);
+  color: #d9b877;
+}
+
+/* 五行小色点 */
+.inner-node-card__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* 这些区块高度固定，不参与 flex 伸缩（否则会被正文挤扁） */
+.inner-node-card__head,
+.inner-node-card__meta,
+.inner-node-card__verse,
+.inner-node-card__source {
+  flex: none;
+}
+
+/* ============ 正文 ============ */
+
+.inner-node-card__body {
+  /* flex 子项默认 min-height:auto 不会收缩，正文一长就把卡片顶破 max-height，
+     于是文字被卡片自己的边界裁掉、后面的引文叠上来。必须显式允许收缩。 */
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 16px;
+  padding-right: 4px;
+  /* 滚动到底时正文与引文之间留一口气 */
+  padding-bottom: 2px;
+  overscroll-behavior: contain;
+  overflow-y: auto;
+  font-size: 13.5px;
+  line-height: 1.92;
+  letter-spacing: 0.015em;
+  color: var(--inc-text);
+  text-align: justify;
+  scrollbar-width: thin;
+  scrollbar-color: #2c3342 transparent;
+}
+
+.inner-node-card__body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.inner-node-card__body::-webkit-scrollbar-thumb {
+  background: #2c3342;
+  border-radius: 3px;
+}
+
+/* 传统歌诀：左侧一道细竖线做引文标识 */
+.inner-node-card__verse {
+  margin: 14px 0 0;
+  padding: 8px 0 8px 12px;
+  border-left: 2px solid var(--inc-accent-deep);
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 12.5px;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+  color: var(--inc-accent);
+  opacity: 0.82;
+}
+
+/* 依据强度脚注：明说「本项目既有定义」还是「传统通用释义」 */
+.inner-node-card__source {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--inc-text-dim2);
+  letter-spacing: 0.03em;
+}
+
+.inner-node-card__source b {
+  font-weight: 600;
+  color: var(--inc-text-dim);
+}
+
+/* ============ 关闭按钮 ============ */
+
+.inner-node-card__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--inc-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--inc-text-dim);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.inner-node-card__close:hover,
+.inner-node-card__close:focus-visible {
+  color: var(--inc-accent);
+  border-color: var(--inc-accent-deep);
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+}
+
+/* ============ 无障碍 ============ */
+
+.inner-node-card:focus {
+  outline: none;
+}
+
+.inner-node-card:focus-visible {
+  outline: 1px solid var(--inc-accent-deep);
+  outline-offset: 3px;
+}
+
+/* 屏幕阅读器专用文本（面板的状态提示） */
+.inner-node-card__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============ 响应式 ============ */
+
+/* 窄屏：面板改为贴底横铺，避免盖住人体 */
+@media (max-width: 760px) {
+  .inner-node-card {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+    width: auto;
+    max-height: 62vh;
+    transform: none;
+    translate: 0 14px;
+  }
+
+  .inner-node-card.is-open {
+    translate: 0 0;
+  }
+
+  .inner-node-card.is-closing {
+    translate: 0 12px;
+  }
+
+  .inner-node-card__name {
+    font-size: 22px;
+  }
+
+  /* 小屏把正文略微收紧，保证「一段话 + 引文 + 依据」能一眼看到七成 */
+  .inner-node-card__body {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.82;
+  }
+
+  .inner-node-card__verse {
+    margin-top: 11px;
+  }
+
+  .inner-node-card__source {
+    margin-top: 11px;
+    padding-top: 8px;
+  }
+}
+
+/* 尊重系统的减弱动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .inner-node-card {
+    transition: opacity 160ms linear;
+    translate: 0 0;
+  }
+
+  .inner-node-card.is-closing {
+    transition: opacity 160ms linear;
+    translate: 0 0;
+  }
+}
+
+/* 兜底：浏览器不支持 color-mix 时退回半透明纯色 */
+@supports not (background: color-mix(in srgb, red 10%, transparent)) {
+  .inner-node-card__glyph {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .inner-node-card__chip.is-group {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
