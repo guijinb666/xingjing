@@ -1,0 +1,1101 @@
+/**
+ * 全局样式与设计令牌落地。
+ *
+ * 视觉基调来自参考录屏逐帧取色，不可替换：
+ *   - 底色 #07080b（近黑的冷调），整站共用一层恒定星空
+ *   - 暖金 #d9b877 为主体色（标题、按钮、太阳、轨道线、释文）
+ *   - 青绿 #6ee7b7 = 十神节点，紫 #a78bfa = 神煞节点
+ *   - 衬线体做标题与读数，无衬线做正文
+ *
+ * 本文件的纪律（朝「克制、精致」那一侧调，不朝「热闹」那一侧）：
+ *   1. 不用渐变。所有面是**平色**，层级靠色调差而不是描边或发光。
+ *   2. 静置的东西没有阴影、没有光晕、没有毛玻璃。阴影只给真正浮起的层（弹窗）。
+ *   3. 不用等宽字体、不做小字号大间距的全大写标签。
+ *   4. 分隔靠留白与色阶，不靠 1px 细线。
+ *   5. 字号只有四级：display / 读数 / 正文 / 小注，中间不加档。
+ *   6. 页边距全站只有一对，区块间距必须明显大于块内间距。
+ *
+ * 起境页的构图母题是**环**：一圈划满刻度的黄道环从右侧出血被视口裁切，
+ * 出生当日的太阳在其中一宫上——换日期它就真的走一格。
+ */
+
+:root {
+  /* ---- 色 ---- */
+  --bg: #07080b;
+  --bg-soft: #0b0d12;
+  --bg-card: #12151c;
+  --bg-lift: #171b23;
+  --gold: #d9b877;
+  --gold-bright: #efd9a4;
+  --gold-deep: #a8823f;
+  --teal: #6ee7b7;
+  --teal-deep: #2f8f6d;
+  --purple: #a78bfa;
+  --purple-deep: #6d4fc4;
+  --live: #6ee7b7;
+  --danger: #e08a7a;
+  --text: #dfe4ec;
+  --text-soft: #c3c9d4;
+  --text-dim: #8b93a5;
+  --text-dim2: #5e6678;
+  --border: #242a36;
+  --border-gold: rgba(217, 184, 119, 0.22);
+  --border-soft: rgba(255, 255, 255, 0.075);
+
+  /* ---- 字体 ---- */
+  --font-serif: 'Songti SC', 'Noto Serif SC', 'Source Han Serif SC', 'STSong', Georgia, serif;
+  --font-sans: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui,
+    -apple-system, sans-serif;
+
+  /* ---- 页边距：全站只有这一对 ---- */
+  --margin: clamp(20px, 3.6vw, 54px);
+
+  /* ---- 圆角：全站一个尺度 ---- */
+  --radius: 4px;
+  --radius-pill: 999px;
+
+  /* ---- 动效 ---- */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* 焦点可见：键盘用户必须看得见自己在哪 */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(217, 184, 119, 0.26);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------- 恒定星空 */
+
+.starfield-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* 星空背景恒定，不随内容滚动位移 */
+}
+
+.starfield-layer canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * 极淡的暖金氛围光，让画面底部不是死黑。
+ * 这是给**整幅星空**打的一层环境光，不是给某个卡片的装饰光晕；
+ * 所以它铺满视口、无固定定位面、也没有任何边缘可见的轮廓。
+ */
+.ambient-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /*
+   * 两团非常淡的色，位置都在视口之外，衰减末端远长于视口对角线 ——
+   * 视口内看不到任何"光斑边缘"，只看到底色不是死黑。
+   */
+  background:
+    radial-gradient(1900px 1300px at 14% -34%, rgba(217, 184, 119, 0.05), transparent 68%),
+    radial-gradient(1700px 1200px at 104% 122%, rgba(167, 139, 250, 0.032), transparent 68%);
+}
+
+/* ------------------------------------------------------------------ 版心 */
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+/* ============================================================ 起境 · 环 */
+
+.act-hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* 环从右侧出血，被视口裁切——它比屏幕大，所以它看起来像天空的一部分 */
+.zodiac-ring {
+  position: absolute;
+  top: 50%;
+  right: min(-16vw, -180px);
+  transform: translateY(-50%);
+  width: min(96vh, 78vw);
+  height: min(96vh, 78vw);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.zodiac-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 刻度：60 条极短刻线代表一个甲子，12 条长刻代表十二宫 */
+.tick-minor {
+  stroke: rgba(217, 184, 119, 0.22);
+  stroke-width: 1;
+}
+.tick-major {
+  stroke: rgba(217, 184, 119, 0.5);
+  stroke-width: 1.5;
+}
+.gong-line {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+}
+.ring-circle {
+  fill: none;
+  stroke: rgba(217, 184, 119, 0.28);
+  stroke-width: 1.25;
+}
+.ring-circle-inner {
+  fill: none;
+  stroke: rgba(217, 184, 119, 0.14);
+  stroke-width: 1;
+}
+
+/*
+ * 纵深：环心一侧的暖光来自组件里的 radialGradient（#ring-depth），
+ * 不用平色圆 —— 平色圆的边缘是一道看得见的弧，渐变没有边界。
+ */
+.ring-depth {
+  stroke: none;
+}
+/* 内轨虚线：12% 在星点密度下等于看不见，提到 20% 让它真的读得出来 */
+.ring-orbit {
+  fill: none;
+  stroke: rgba(217, 184, 119, 0.2);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 11;
+}
+
+/* 宫名：正常大小的字，不是缩小大间距的标签 */
+.gong-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  fill: var(--text-dim);
+}
+
+/* 太阳：出生当日所在的宫位。整页唯一一处持续呼吸的东西 */
+.sun-marker {
+  fill: var(--gold);
+}
+/* 光晕：只是标记周围薄薄一层，不是一块饼。所以半径小、透明度低 */
+.sun-halo {
+  fill: none;
+  stroke: rgba(217, 184, 119, 0.3);
+  stroke-width: 1;
+  animation: sun-breathe 4.2s ease-in-out infinite;
+}
+.sun-ring {
+  fill: none;
+  stroke: var(--gold-bright);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+/* 从内圈指向外缘的太阳指向线（组件里叫 .sun-ray） */
+.sun-ray {
+  stroke: rgba(217, 184, 119, 0.34);
+  stroke-width: 1;
+  stroke-dasharray: 2 5;
+}
+.sun-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  fill: var(--gold-bright);
+}
+
+/* 星符按钮：平色方角，与全站控件同一形状语言。激活靠色阶，不靠发光 */
+.rune-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius);
+  background: rgba(18, 21, 28, 0.86);
+  color: var(--gold);
+  cursor: pointer;
+  transition:
+    background 260ms var(--ease-out-quart),
+    border-color 260ms var(--ease-out-quart),
+    color 260ms var(--ease-out-quart);
+}
+.rune-button.is-hover:not(:disabled) {
+  border-color: rgba(217, 184, 119, 0.46);
+  background: var(--bg-lift);
+}
+.rune-button.is-running .rune-glyph {
+  animation: rune-spin 14s linear infinite;
+}
+.rune-button.is-paused .rune-glyph {
+  animation: rune-pulse 3s ease-in-out infinite;
+}
+.rune-button.is-paused {
+  color: var(--text-dim);
+  border-color: var(--border);
+}
+.rune-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@keyframes rune-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rune-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes sun-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.4;
+  }
+}
+
+/* 起境左栏：陈述 + 表单。左对齐，贴住同一条左边线 */
+.hero-col {
+  position: relative;
+  z-index: 1;
+  /* 左右两侧都要让出页边距：只写 margin-left 时，小屏会被 width:100% 顶到右边缘 */
+  width: calc(100% - var(--margin) * 2);
+  max-width: 592px;
+  margin-left: var(--margin);
+  padding: clamp(52px, 9vh, 120px) 0;
+}
+
+.hero-statement {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(30px, 4.4vw, 54px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  max-width: 12ch;
+}
+
+/* 支持句：走正文的满墨色，不用灰 */
+.hero-support {
+  margin: 22px 0 0;
+  font-size: clamp(15px, 1.25vw, 17px);
+  line-height: 1.7;
+  color: var(--text-soft);
+  max-width: 40ch;
+}
+
+/* ---------------------------------------------------------------- 表单 */
+
+/* 表单不是卡片：它是这段陈述下面的一个区块，靠留白与色阶分区 */
+.form-block {
+  margin-top: clamp(40px, 5.4vh, 62px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.field.is-full {
+  grid-column: 1 / -1;
+}
+
+/* 字段名：句子大小写、正常字号，不做全大写大间距 */
+.field-label {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.field-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 15px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  color-scheme: dark;
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease;
+}
+
+.field-input:hover {
+  border-color: rgba(217, 184, 119, 0.28);
+}
+
+.field-input:focus {
+  border-color: rgba(217, 184, 119, 0.62);
+  background: var(--bg-lift);
+  box-shadow: none;
+}
+
+select.field-input {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 38px;
+}
+
+.select-wrap {
+  position: relative;
+}
+
+.select-caret {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gold-deep);
+  pointer-events: none;
+}
+
+/* 性别：两个等宽的平面块，选中靠**填充色**而不是发光描边 */
+.gender-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.gender-chip {
+  height: 48px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.028);
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.gender-chip:hover {
+  color: var(--text);
+  border-color: rgba(217, 184, 119, 0.3);
+}
+
+.gender-chip.is-active {
+  color: var(--gold-bright);
+  border-color: rgba(217, 184, 119, 0.5);
+  background: rgba(217, 184, 119, 0.12);
+}
+
+.gender-chip:active {
+  transform: translateY(1px);
+}
+
+/* 主按钮：平色、方角。全站按钮只有这一种形状 */
+.primary-button {
+  grid-column: 1 / -1;
+  position: relative;
+  width: 100%;
+  height: 54px;
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: #17130a;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    transform 200ms var(--ease-out-expo);
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--gold-bright);
+}
+
+.primary-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+  background: #3a3729;
+  color: #7d7768;
+}
+
+.primary-button svg {
+  transition: transform 320ms var(--ease-out-expo);
+}
+
+.primary-button:hover:not(:disabled) svg {
+  transform: translate(3px, -3px);
+}
+
+/* 口径声明与免责：小注，但不是灰到看不见 */
+.disclaimer {
+  grid-column: 1 / -1;
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.form-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+/* 落款：立意句，楷/宋体，居中一次——全页唯一一处居中 */
+.inscription {
+  margin: clamp(34px, 5vh, 56px) 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(14px, 1.15vw, 16px);
+  letter-spacing: 0.26em;
+  color: var(--gold-deep);
+}
+
+.footnote {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75;
+  letter-spacing: 0.04em;
+  color: var(--text-dim2);
+  max-width: 46ch;
+}
+
+.legal-line {
+  margin: clamp(20px, 3vh, 30px) 0 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-dim2);
+  max-width: 46ch;
+}
+
+/* ---- 分屏舞台：三幕各自占满一屏，靠按钮推进，不是滚动 ---- */
+
+.stage-root {
+  position: relative;
+  width: 100%;
+}
+
+.stage-view {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  animation: stage-in 620ms var(--ease-out-expo) both;
+  transform-origin: 50% 52%;
+}
+
+/*
+ * 切屏离开：轻微前推 + 淡出，营造「翻过一页」的纵深。
+ * 只动 opacity / transform，不产生重排。
+ */
+.stage-root.is-leaving .stage-view {
+  animation: none;
+  opacity: 0;
+  transform: translateY(-14px) scale(0.99);
+  transition:
+    opacity 320ms ease,
+    transform 320ms var(--ease-out-quart);
+  pointer-events: none;
+}
+
+@keyframes stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 标题逐行从自己的基线后升起（签名动作） */
+.line-mask {
+  display: block;
+  overflow: hidden;
+}
+
+.line-inner {
+  display: block;
+  animation: line-rise 900ms var(--ease-out-expo) both;
+}
+
+@keyframes line-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.42em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line-inner {
+    animation: none;
+  }
+}
+
+/* -------------------------------------------------------- 内景区（星图） */
+
+.act-inner {
+  position: relative;
+  min-height: 100vh;
+  padding: 0;
+}
+
+.inner-canvas-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* canvas 上的手势全部由组件接管：不滚动、不禁用双击、抓取光标 */
+.inner-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.inner-canvas:active {
+  cursor: grabbing;
+}
+
+/*
+ * 内景 HUD：四角贴边。
+ * 中央永远是空的 —— 那一屏的主体就是画面中心的人形与星场，
+ * 任何中央面板都是在和主体抢注意力。
+ */
+.inner-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(20px, 3vw, 36px) var(--margin);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.hud-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.hud-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  animation: hud-pulse 2.8s ease-in-out infinite;
+}
+
+/*
+ * 状态点的呼吸：只动 opacity。
+ * 原来用了 box-shadow 光晕，静态发光是明确要避免的手法。
+ */
+@keyframes hud-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.32;
+  }
+}
+
+.hud-stamp {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+/* 图例：左下角，与读数对称 */
+.inner-legend {
+  position: absolute;
+  left: var(--margin);
+  bottom: clamp(20px, 3.6vw, 46px);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.legend-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.legend-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.legend-swatch.is-teal {
+  color: var(--teal);
+}
+
+.legend-swatch.is-purple {
+  color: var(--purple);
+}
+
+/* 操作提示：告诉用户这一屏可以拖拽/缩放 */
+.legend-hint {
+  margin-top: 5px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim2);
+}
+
+/* 读数：右下角，右对齐 */
+.inner-readout {
+  position: absolute;
+  right: var(--margin);
+  bottom: clamp(20px, 3.6vw, 46px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 9px;
+  z-index: 4;
+  max-width: 46vw;
+  text-align: right;
+  pointer-events: none;
+}
+
+/* 四柱：这一屏的第二大字级，衬线、宽字距，是整页的「数据」门面 */
+.readout-siZhu {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 2.2vw, 28px);
+  letter-spacing: 0.18em;
+  color: var(--text);
+}
+
+.readout-line {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.readout-line b {
+  color: var(--gold);
+  font-weight: 500;
+}
+
+/* ---- 推进按钮：把叙事从「内景」翻到「星轨」（不是滚动） ---- */
+
+.stage-advance {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(24px, 4.5vh, 52px);
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+/* 与主按钮同一形状、同一平色，只是尺寸小一号 */
+.advance-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 30px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  color: #17130a;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    transform 200ms var(--ease-out-expo);
+}
+
+.advance-button:hover {
+  background: var(--gold-bright);
+}
+
+.advance-button:active {
+  transform: translateX(0) translateY(1px);
+}
+
+.stage-advance .advance-button:active {
+  transform: translateY(1px);
+}
+
+.advance-arrow {
+  animation: hint-drop 2.4s ease-in-out infinite;
+}
+
+@keyframes hint-drop {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(3px);
+  }
+}
+
+/* ---- 返回按钮：星轨页左上角回到内景 ---- */
+
+/* 平面小按钮，不用毛玻璃也不用胶囊 */
+.back-button {
+  position: absolute;
+  top: clamp(20px, 3vw, 36px);
+  left: var(--margin);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 18px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  z-index: 7;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.back-button:hover {
+  color: var(--gold);
+  border-color: var(--border-gold);
+  background: rgba(217, 184, 119, 0.08);
+}
+
+/* ------------------------------------------------------ 星轨区（轨道图） */
+
+.act-orbit {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(84px, 11vh, 116px) 0 clamp(72px, 10vh, 104px);
+  overflow: hidden;
+}
+
+/*
+ * 星轨的构图与起境成对：起境是竖着的环，这里是横着的椭圆。
+ * 标题改成**左对齐**、贴住同一条左边线 —— 三幕里只有起境的落款居中一次，
+ * 其余全部贴左栏，这样页面才有「一条版心贯穿三幕」的感觉。
+ */
+.orbit-block {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.orbit-head {
+  padding: 0 var(--margin);
+  margin-bottom: clamp(8px, 1.6vh, 20px);
+}
+
+.orbit-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 4.4vw, 56px);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1.08;
+  color: var(--text);
+}
+
+.orbit-sub {
+  margin: 14px 0 0;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-deep);
+  min-height: 1.5em;
+}
+
+/*
+ * 轨道台：横向铺满视口（左右出血），不加圆角、不加边框、不加底。
+ * 轨道线本身要一直画到屏幕边缘，视图框才不像一张卡片。
+ */
+.orbit-stage {
+  position: relative;
+  width: 100%;
+  height: min(70vh, 660px);
+}
+
+.orbit-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * 贴图载入中的占位层。
+ *
+ * ★ 存在理由：原先 11 张贴图是在进入星轨瞬间逐像素同步生成的（实测 7876ms，
+ *   浏览器里是 10905ms 主线程长任务），页面直接冻住、连这个层都画不出来。
+ *   现在改成异步解码静态图，通常一两百毫秒内就绪，这一层保证即使
+ *   慢网/首次解码也有明确反馈，而不是一片空白。
+ */
+.orbit-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  pointer-events: none;
+  animation: orbit-loading-in 420ms ease-out both;
+}
+
+@keyframes orbit-loading-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.orbit-loading-ring {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--gold) 26%, transparent);
+  border-top-color: var(--gold);
+  animation: orbit-loading-spin 1.15s linear infinite;
+}
+
+@keyframes orbit-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.orbit-loading-text {
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: color-mix(in srgb, var(--gold) 62%, transparent);
+}
+
+/* 尊重「减少动态效果」偏好：不再转动，只做静态提示 */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-loading-ring {
+    animation: none;
+  }
+  .orbit-loading {
+    animation: none;
+  }
+}
+
+/* 星轨页脚 */
+.orbit-foot {
+  position: absolute;
+  left: var(--margin);
+  right: var(--margin);
+  /* 抬到文字块够用的净空：原来 34px 装不下两行脚注，末行被视口底切掉 */
+  bottom: clamp(48px, 6vh, 76px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/*
+ * 脚注收成 28ch 的两行，并靠右停放 —— 与左下角的星符按钮分行两端，
+ * 两者不再共位（原先脚注也从 x≈0 起排，正压在按钮上）。
+ */
+.orbit-foot .footnote {
+  /* margin-left:auto 让它顶到 flex 行的右端 —— 否则它塌在行首，正压在左下角的星符按钮上 */
+  margin: 0 0 0 auto;
+  max-width: 26ch;
+  text-align: right;
+  color: var(--text-dim2);
+  font-size: 12.5px;
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+}
+
+/*
+ * 星符按钮是 OrbitCanvas 渲染的流内子元素（实测 position:static、x=0），
+ * .orbit-foot 的 --margin 管不到它 —— 所以在这里把它钉到 canvas 左下角的缩进线上，
+ * 与右上角的「返回内景」、左侧标题共用同一条边线，也不再和脚注共位。
+ */
+.orbit-canvas > .rune-button {
+  position: absolute;
+  left: var(--margin);
+  bottom: 96px;
+  z-index: 6;
+}
+
+/* ---------------------------------------------------------- 降级动效 */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------- 窄视口
+   手机竖屏（<= 640px）：右侧没有空间放环，环退为**铺在画面上半部的背景天空**，
+   仍保留全部刻度 / 宫名 / 太阳标记，但不再与表单争夺右侧空间，
+   也不再让 .hero-col 因横向溢出而右贴边。
+   平板（641–1024px）与桌面继续用「右侧出血」的构图（834×1112 实测效果良好）。 */
+@media (max-width: 640px) {
+  .hero-col {
+    padding: 40px 0 28px;
+  }
+  .hero-support {
+    margin-top: 18px;
+  }
+  .form-block {
+    margin-top: 30px;
+  }
+
+  /* 手机上环不再横跨视口：表单的输入框是不透明底，「横跨」会被切成两截。
+     改为把完整的圆放进陈述区的留白里（H1 与支持句右侧），
+     环在表单开始之前就结束，形状完整可读。 */
+  .zodiac-ring {
+    top: 34px;
+    right: calc(var(--margin) * -0.35);
+    left: auto;
+    transform: none;
+    width: 78vw;
+    height: 78vw;
+    opacity: 0.62;
+  }
+
+  /* 宫名在窄屏会散落到正文与输入框之间，读起来是脏点而不是刻度盘 ——
+     手机上只保留刻度与太阳标记，文字全部交给左栏陈述。 */
+  .gong-label {
+    display: none;
+  }
+
+  /* 太阳标记是这一屏唯一的「活的东西」，窄屏必须能看清 */
+  .sun-marker {
+    r: 5;
+  }
+  .sun-label {
+    font-size: 11px;
+  }
+}
+
+/* 极窄（<= 400px）：环再收一点，避免刻度过密糊成一片 */
+@media (max-width: 400px) {
+  .zodiac-ring {
+    top: 26px;
+    width: 74vw;
+    height: 74vw;
+    opacity: 0.58;
+  }
+}
