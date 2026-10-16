@@ -1,0 +1,63 @@
+{
+  "Mercury": {
+    "file": "mercury.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Venus": {
+    "file": "venus.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Earth": {
+    "file": "earth.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Mars": {
+    "file": "mars.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Jupiter": {
+    "file": "jupiter.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Saturn": {
+    "file": "saturn.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Uranus": {
+    "file": "uranus.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Neptune": {
+    "file": "neptune.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "Sun": {
+    "file": "sun.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "SunGlow": {
+    "file": "sun-glow.webp",
+    "width": 256,
+    "height": 256
+  },
+  "EarthClouds": {
+    "file": "earth-clouds.webp",
+    "width": 1024,
+    "height": 512
+  },
+  "meta": {
+    "quality": 0.92,
+    "format": "webp",
+    "generatedBy": "scripts/bake-textures.mjs",
+    "generatedAt": "2026-10-16T15:21:09.532Z"
+  }
+}
