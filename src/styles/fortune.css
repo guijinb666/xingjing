@@ -1,0 +1,819 @@
+﻿/*
+ * 命理与运势解读（第四幕）样式。
+ *
+ * 视觉纪律承接 global.css：
+ *   1. 不用渐变；面与面靠**色调差**分层，不靠 1px 线、不靠阴影。
+ *   2. 静置元素无发光、无毛玻璃。
+ *   3. 不用等宽字体，不做小字号大间距的全大写标签。
+ *   4. 字号只有四级：sec-title / 读数 / 正文 / 小注。
+ *
+ * 与前三幕的关系：起境是**环**、内景是**深度**、星轨是**椭圆**，
+ * 这一幕是**一栏**（column）—— 前三幕的主体都是画面，这一幕的主体是文本，
+ * 所以它回到起境那条左边线上，用同一条版心贯穿。
+ */
+
+/* ------------------------------------------------------------ 幕根 */
+
+.fortune {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* 给固定 HUD 与底部导航留出净空 */
+  padding: clamp(72px, 9vh, 104px) 0 clamp(96px, 12vh, 128px);
+}
+
+/* 这一幕是阅读页，HUD 不参与布局，只占顶部一条 */
+.fortune-hud {
+  position: fixed;
+}
+
+/*
+ * 版心：与 .hero-col 用同一对页边距与同一个 max-width，
+ * 使四幕的左边缘在视觉上是同一条竖线。
+ */
+.fortune-main {
+  position: relative;
+  z-index: 1;
+  width: calc(100% - var(--margin) * 2);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* 窄视口下改回贴左边线（与起境一致），不留居中空白 */
+@media (max-width: 900px) {
+  .fortune-main {
+    margin-left: var(--margin);
+    margin-right: var(--margin);
+    width: auto;
+  }
+}
+
+/* ------------------------------------------------------------ 入场 */
+
+/*
+ * 统一的入场过渡：位移 + 淡入，延迟由组件用内联 --reveal-delay 逐块递增。
+ * 节奏取 tokens.motion.reveal = 620ms、stagger = 78ms。
+ */
+.fortune .fortune-head,
+.fortune .fortune-sec,
+.fortune .fortune-foot,
+.fortune .pillar-card,
+.fortune .wuxing-row,
+.fortune .chain-item,
+.fortune .pattern-cell,
+.fortune .shensha-item,
+.fortune .luck-row,
+.fortune .flow-row,
+.fortune .favor-chip {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 620ms var(--ease-out-quart) var(--reveal-delay, 0ms),
+    transform 620ms var(--ease-out-quart) var(--reveal-delay, 0ms);
+}
+
+.fortune.is-shown .fortune-head,
+.fortune.is-shown .fortune-sec,
+.fortune.is-shown .fortune-foot,
+.fortune.is-shown .pillar-card,
+.fortune.is-shown .wuxing-row,
+.fortune.is-shown .chain-item,
+.fortune.is-shown .pattern-cell,
+.fortune.is-shown .shensha-item,
+.fortune.is-shown .luck-row,
+.fortune.is-shown .flow-row,
+.fortune.is-shown .favor-chip {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fortune .fortune-head,
+  .fortune .fortune-sec,
+  .fortune .fortune-foot,
+  .fortune .pillar-card,
+  .fortune .wuxing-row,
+  .fortune .chain-item,
+  .fortune .pattern-cell,
+  .fortune .shensha-item,
+  .fortune .luck-row,
+  .fortune .flow-row,
+  .fortune .favor-chip {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .fortune .wuxing-fill {
+    transition: none !important;
+  }
+
+  .fortune .advance-arrow,
+  .fortune .hud-dot {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------ 页首 */
+
+.fortune-head {
+  padding-bottom: clamp(28px, 4.4vh, 46px);
+}
+
+.fortune-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+
+.fortune-lede {
+  margin: 20px 0 0;
+  max-width: 44ch;
+  font-size: 16px;
+  line-height: 1.72;
+  color: var(--text-soft);
+}
+
+.fortune-lede strong {
+  font-weight: 500;
+  color: var(--gold);
+}
+
+/* ------------------------------------------------------------ 区块骨架 */
+
+/*
+ * 区块之间靠大留白分区，块内靠小留白 —— 落差必须明显，
+ * 否则整页读起来是同一密度的文档。
+ */
+.fortune-sec {
+  padding: clamp(30px, 4.6vh, 48px) 0;
+}
+
+.sec-head {
+  margin-bottom: clamp(18px, 2.6vh, 28px);
+}
+
+.sec-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+
+.sec-note {
+  margin: 10px 0 0;
+  max-width: 52ch;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.fortune-empty {
+  font-size: 16px;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------ ① 四柱 */
+
+.fortune-pillars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* 四柱的「面」：抬升一档的色调，不用描边也不用阴影 */
+.pillar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+}
+
+.pillar-card.is-self {
+  background: var(--bg-lift);
+}
+
+.pillar-name {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.pillar-gz {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.pillar-card.is-self .pillar-gz {
+  color: var(--gold);
+}
+
+.pillar-meta {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.pillar-meta-dim {
+  color: var(--text-dim2);
+}
+
+.pillar-kong {
+  margin-left: 8px;
+  padding: 1px 6px;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--danger);
+  background: rgba(224, 138, 122, 0.12);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------ ② 五行 */
+
+.wuxing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wuxing-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 108px;
+  align-items: center;
+  gap: 16px;
+}
+
+.wuxing-name {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+/* 轨道：只有一档色调差，不加边框 */
+.wuxing-track {
+  position: relative;
+  height: 10px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.wuxing-fill {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  border-radius: var(--radius);
+}
+
+.wuxing-val {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-soft);
+}
+
+.wuxing-val em {
+  margin-left: 8px;
+  font-style: normal;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------ ③ 强弱 */
+
+.strength-block {
+  padding: 20px 0 0;
+}
+
+.strength-level {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+}
+
+.strength-tag {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  letter-spacing: 0.1em;
+}
+
+.strength-tag.is-weak {
+  color: var(--teal);
+}
+
+.strength-tag.is-strong {
+  color: var(--purple);
+}
+
+.strength-tag.is-even {
+  color: var(--gold);
+}
+
+.strength-eq {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.strength-basis {
+  margin: 14px 0 0;
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-soft);
+}
+
+/* ------------------------------------------------------------ ④ 喜忌 */
+
+.favor-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.favor-label {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.favor-label.is-gap {
+  margin-left: 14px;
+}
+
+.favor-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 7px 14px;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  border-radius: var(--radius);
+}
+
+.favor-chip.is-good {
+  color: var(--teal);
+  background: rgba(110, 231, 183, 0.1);
+}
+
+.favor-chip.is-bad {
+  color: var(--purple);
+  background: rgba(167, 139, 250, 0.1);
+}
+
+.favor-none {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+/* 推导链：条与条之间靠留白，不画线 */
+.chain-list {
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chain-item {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.chain-title {
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+}
+
+.chain-body {
+  font-size: 15px;
+  line-height: 1.78;
+  color: var(--text-soft);
+}
+
+/* ------------------------------------------------------------ ⑤ 十神 */
+
+.pattern-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pattern-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+}
+
+.pattern-cell.is-dominant {
+  background: var(--bg-lift);
+}
+
+.pattern-cell.is-absent {
+  background: transparent;
+}
+
+.pattern-nm {
+  font-style: normal;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--text-soft);
+}
+
+.pattern-cell.is-absent .pattern-nm {
+  color: var(--text-dim2);
+}
+
+.pattern-ct {
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.pattern-cell.is-dominant .pattern-ct {
+  color: var(--gold);
+}
+
+.pattern-cell.is-absent .pattern-ct {
+  color: var(--text-dim2);
+}
+
+.pattern-reading,
+.pattern-missing {
+  margin: 22px 0 0;
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.78;
+  color: var(--text-soft);
+}
+
+.pattern-missing strong {
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------ ⑥ 神煞 */
+
+.shensha-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 36px;
+}
+
+.shensha-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+
+.shensha-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shensha-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 14px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  /* 凶煞 hover 的微变：只动背景色调，不动尺寸、不加光 */
+  transition: background-color 200ms ease;
+}
+
+.shensha-item:hover {
+  background: var(--bg-lift);
+}
+
+.shensha-name {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.shensha-where {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.shensha-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim2);
+}
+
+.shensha-neutral {
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------ ⑦⑧ 大运 / 流年 */
+
+.luck-list,
+.flow-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.luck-row,
+.flow-row {
+  display: grid;
+  grid-template-columns: 26px 62px 56px 92px 52px 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+}
+
+.flow-row {
+  grid-template-columns: 62px 62px 56px 52px 1fr;
+}
+
+.luck-seq {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim2);
+}
+
+.luck-gz,
+.flow-gz {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.luck-ss,
+.flow-ss {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.luck-age {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.flow-year {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-soft);
+}
+
+/* 评级只用一个字 + 一档色调，不做徽章、不做底色块 */
+.luck-rating,
+.flow-rating {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  text-align: center;
+}
+
+.is-ji .luck-rating,
+.is-ji .flow-rating {
+  color: var(--teal);
+}
+
+.is-xiong .luck-rating,
+.is-xiong .flow-rating {
+  color: var(--purple);
+}
+
+.is-ping .luck-rating,
+.is-ping .flow-rating {
+  color: var(--text-dim);
+}
+
+.luck-reason,
+.flow-reason {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------ 落款 */
+
+.fortune-foot {
+  margin-top: clamp(34px, 5vh, 56px);
+  padding-top: clamp(26px, 3.6vh, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fortune-inscription {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.fortune-method {
+  margin: 0;
+  max-width: 64ch;
+  font-size: 12px;
+  line-height: 1.72;
+  color: var(--text-dim);
+}
+
+/*
+ * 诚实性声明：FORTUNE_DISCLAIMER 的容器。
+ * 给它一档更亮的正文色与稍大的字号 —— 这不是页脚小字免责，
+ * 是这一页必须被读到的一段话。
+ */
+.fortune-disclaimer {
+  margin: 0;
+  max-width: 62ch;
+  padding: 18px 20px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-soft);
+  background: var(--bg-card);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------ 导航 */
+
+/*
+ * 这一幕是滚动的文档，所以 global.css 里那两个 absolute 定位的
+ * 前进/返回按钮在这里要改成参与文档流 —— 否则它们会浮在正文上方。
+ */
+/*
+ * 导航也走同一个版心。做法是给它们各自一个「版心宽度的外层」，
+ * 按钮本身仍按内容宽度排布（fit-content），不被拉满。
+ * 注意不能直接给 <button> 加 width —— 那会把它拉成一条通栏色块。
+ */
+.fortune .back-button,
+.fortune .stage-advance {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+}
+
+.fortune .back-button {
+  /* 版心左缘 + 按钮自身宽度 */
+  margin: 0 auto 4px;
+  width: calc(100% - var(--margin) * 2);
+  max-width: 720px;
+}
+
+.fortune .back-button > span,
+.fortune .back-button {
+  text-align: left;
+}
+
+.fortune .stage-advance {
+  width: calc(100% - var(--margin) * 2);
+  max-width: 720px;
+  margin: clamp(30px, 4.4vh, 46px) auto 0;
+  padding: 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.fortune .stage-advance .advance-button {
+  width: auto;
+}
+
+/*
+ * 上一条会命中 <button class="back-button"> 自身：它是 inline-block 的按钮，
+ * 直接给 width 会拉成通栏。用 fit-content 恢复按钮宽度，同时保留
+ * 由 margin:auto + max-width 建立的版心左缘。
+ */
+.fortune .back-button {
+  width: fit-content;
+  /* fit-content 之后必须重新用 margin 对齐到版心左缘：
+     由 .fortune-main 的 (100vw - 720px)/2 决定，窄视口下退回 var(--margin)。 */
+  margin-left: max(var(--margin), calc((100% - 720px) / 2));
+  margin-right: auto;
+  text-align: left;
+}
+
+/* ------------------------------------------------------------ 窄视口 */
+
+@media (max-width: 720px) {
+  .fortune-pillars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pattern-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .shensha-cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+
+  .wuxing-row {
+    grid-template-columns: 30px 1fr 92px;
+    gap: 12px;
+  }
+
+  /* 长表在窄屏改为两行式：第一行是标识，第二行是解说 */
+  .luck-row {
+    grid-template-columns: 24px 54px 50px 1fr;
+    grid-template-areas:
+      'seq gz ss rating'
+      'age age age age'
+      'reason reason reason reason';
+    row-gap: 8px;
+  }
+
+  .luck-seq {
+    grid-area: seq;
+  }
+  .luck-gz {
+    grid-area: gz;
+  }
+  .luck-ss {
+    grid-area: ss;
+  }
+  .luck-rating {
+    grid-area: rating;
+  }
+  .luck-age {
+    grid-area: age;
+  }
+  .luck-reason {
+    grid-area: reason;
+  }
+
+  .flow-row {
+    grid-template-columns: 58px 58px 1fr;
+    grid-template-areas:
+      'year gz rating'
+      'ss ss ss'
+      'reason reason reason';
+    row-gap: 8px;
+  }
+
+  .flow-year {
+    grid-area: year;
+  }
+  .flow-gz {
+    grid-area: gz;
+  }
+  .flow-rating {
+    grid-area: rating;
+  }
+  .flow-ss {
+    grid-area: ss;
+  }
+  .flow-reason {
+    grid-area: reason;
+  }
+
+  /* 推导链在窄屏改为上下排列 */
+  .chain-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+}
