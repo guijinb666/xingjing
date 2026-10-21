@@ -1,0 +1,45 @@
+# ---------- 依赖 ----------
+node_modules/
+.pnpm-store/
+
+# ---------- 构建产物 ----------
+dist/
+dist-dev/
+*.tsbuildinfo
+
+# ---------- 调试与验收产物（不入库） ----------
+# _probe / _shots 是开发期的截图、抽帧、诊断输出，体积大且可重新生成
+_probe/
+_shots/
+_probe*.png
+_*.json
+
+# 诊断脚本（以下划线开头的临时脚本）
+scripts/_*
+scripts/*_probe.*
+scripts/vite.probe.config.ts
+
+# ---------- img2threejs 技能状态目录（含参考图与中间产物） ----------
+.img2threejs/
+.taste-skill/
+
+# ---------- 历史备份副本（重构期的 .bak 链） ----------
+# 注意 `*.bak` 只匹配以 .bak 结尾的名字；`innerScene.bak.ts` 是以 .ts 结尾、
+# .bak 在中间，必须再补 `*.bak.*` 才能覆盖到。
+*.bak
+*.bak.*
+*.bak-*
+*.bak[0-9]*
+*.orig
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 环境与密钥 ----------
+.env
+.env.*
+!.env.example
